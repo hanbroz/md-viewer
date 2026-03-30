@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 let mainWindow;
+let folderWatcher = null;
 
 // --- Config Management ---
 const userDataPath = app.getPath('userData');
@@ -67,23 +68,36 @@ function loadFileAndItsFolder(filePath) {
     loadFolder(folderPath);
 }
 
-function loadFolder(folderPath) {
-    if (!fs.existsSync(folderPath)) return;
-    
-    updateConfig('lastFolder', folderPath);
-    
+function sendFolderFiles(folderPath) {
     fs.readdir(folderPath, (err, files) => {
         if (err) return;
-        
-        // Filter markdown files
+
         const mdFiles = files.filter(f => f.endsWith('.md') || f.endsWith('.markdown')).map(f => {
             return {
                 name: f,
                 path: path.join(folderPath, f)
             };
         });
-        
+
         mainWindow.webContents.send('load-folder', mdFiles, folderPath, appConfig.lastFile);
+    });
+}
+
+function loadFolder(folderPath) {
+    if (!fs.existsSync(folderPath)) return;
+
+    updateConfig('lastFolder', folderPath);
+
+    sendFolderFiles(folderPath);
+
+    // Watch folder for changes
+    if (folderWatcher) {
+        folderWatcher.close();
+    }
+    folderWatcher = fs.watch(folderPath, (eventType, filename) => {
+        if (filename && (filename.endsWith('.md') || filename.endsWith('.markdown'))) {
+            sendFolderFiles(folderPath);
+        }
     });
 }
 
@@ -104,6 +118,16 @@ function createMenu() {
                 },
                 { type: 'separator' },
                 { role: 'quit' }
+            ]
+        },
+        {
+            label: 'Edit',
+            submenu: [
+                {
+                    label: 'Find...',
+                    accelerator: 'CmdOrCtrl+F',
+                    click: () => mainWindow.webContents.send('toggle-search')
+                }
             ]
         },
         {
@@ -138,7 +162,12 @@ function createWindow() {
     createMenu();
 
     mainWindow.loadFile('index.html');
-    
+
+    // Forward find-in-page results to renderer
+    mainWindow.webContents.on('found-in-page', (event, result) => {
+        mainWindow.webContents.send('find-result', result);
+    });
+
     // Save window size on exit
     mainWindow.on('close', () => {
         updateConfig('windowBounds', mainWindow.getBounds());
@@ -181,6 +210,10 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+    if (folderWatcher) {
+        folderWatcher.close();
+        folderWatcher = null;
+    }
     if (process.platform !== 'darwin') {
         app.quit();
     }
@@ -227,6 +260,16 @@ ipcMain.on('print-document', (event) => {
             console.error('Print failed:', failureReason);
         }
     });
+});
+
+ipcMain.on('find-in-page', (event, text, options) => {
+    if (text) {
+        mainWindow.webContents.findInPage(text, options || {});
+    }
+});
+
+ipcMain.on('stop-find-in-page', (event) => {
+    mainWindow.webContents.stopFindInPage('clearSelection');
 });
 
 ipcMain.on('save-to-html', async (event, htmlContent) => {

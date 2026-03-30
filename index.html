@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <title>Markdown Viewer</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <link rel="stylesheet" href="./dist/github-markdown.css">
+    <link rel="stylesheet" href="./dist/hljs-github.css">
     <style>
         body {
             margin: 0;
@@ -47,10 +47,69 @@
             color: #d1d5da;
         }
         
+        #search-bar {
+            position: fixed;
+            top: 55px;
+            right: 20px;
+            z-index: 999;
+            background: #fff;
+            border: 1px solid #d1d5da;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            align-items: center;
+            padding: 6px 10px;
+            gap: 6px;
+        }
+        #search-bar.visible {
+            display: flex;
+        }
+        #search-input {
+            padding: 5px 10px;
+            border: 1px solid #d1d5da;
+            border-radius: 3px;
+            font-size: 14px;
+            width: 260px;
+            outline: none;
+        }
+        #search-input:focus {
+            border-color: #0366d6;
+            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.15);
+        }
+        #search-count {
+            font-size: 13px;
+            color: #586069;
+            min-width: 70px;
+            text-align: center;
+        }
+        #search-bar button {
+            background: #fafbfc;
+            border: 1px solid #d1d5da;
+            border-radius: 3px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #24292e;
+            line-height: 1;
+        }
+        #search-bar button:hover {
+            background: #f3f4f6;
+        }
+
+        mark.search-highlight {
+            background-color: #fff3a8;
+            color: inherit;
+            border-radius: 2px;
+            padding: 0;
+        }
+        mark.search-active {
+            background-color: #ff9632;
+        }
+
         #main-container {
             display: flex;
             flex: 1;
-            height: calc(100vh - 50px);
+            min-height: 0;
             overflow: hidden;
         }
         
@@ -150,7 +209,7 @@
                 line-height: 1.5;
             }
 
-            #toolbar, #sidebar, #resizer {
+            #toolbar, #sidebar, #resizer, #search-bar {
                 display: none !important;
             }
 
@@ -246,6 +305,14 @@
         <span id="status">Ready</span>
     </div>
     
+    <div id="search-bar">
+        <input type="text" id="search-input" placeholder="검색어 입력..." />
+        <span id="search-count"></span>
+        <button id="search-prev" title="이전 (Shift+Enter)">&#9650;</button>
+        <button id="search-next" title="다음 (Enter)">&#9660;</button>
+        <button id="search-close" title="닫기 (Esc)">&#10005;</button>
+    </div>
+
     <div id="main-container">
         <div id="sidebar" tabindex="0">
             <div id="sidebar-header">EXPLORER</div>
@@ -260,11 +327,10 @@
         </div>
     </div>
     
-    <!-- Dependencies from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
-    
-    <!-- App Logic -->
-    <script type="module" src="./renderer.js"></script>
+    <!-- Mermaid (pre-built browser bundle, loaded as global) -->
+    <script src="./dist/mermaid.min.js"></script>
+
+    <!-- App Logic (bundled with marked + highlight.js) -->
+    <script type="module" src="./dist/renderer.bundle.js"></script>
 </body>
 </html>

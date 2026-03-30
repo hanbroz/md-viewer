@@ -9,5 +9,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     saveSidebarWidth: (width) => ipcRenderer.send('save-sidebar-width', width),
     printToPdf: () => ipcRenderer.send('print-to-pdf'),
     printDocument: () => ipcRenderer.send('print-document'),
-    saveToHtml: (htmlContent) => ipcRenderer.send('save-to-html', htmlContent)
+    saveToHtml: (htmlContent) => ipcRenderer.send('save-to-html', htmlContent),
+    findInPage: (text, options) => ipcRenderer.send('find-in-page', text, options),
+    stopFindInPage: () => ipcRenderer.send('stop-find-in-page'),
+    onFindResult: (callback) => ipcRenderer.on('find-result', (event, result) => callback(result)),
+    onToggleSearch: (callback) => ipcRenderer.on('toggle-search', () => callback())
 });

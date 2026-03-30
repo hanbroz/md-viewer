@@ -1,9 +1,9 @@
-import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+import { marked } from 'marked';
+import hljs from 'highlight.js/lib/common';
 
+// mermaid is loaded as a global via script tag (pre-built browser bundle)
+const mermaid = window.mermaid;
 mermaid.initialize({ startOnLoad: false, theme: 'default' });
-
-// Note: marked v17 removed the highlight callback.
-// Syntax highlighting is applied after rendering via hljs.highlightElement().
 
 const renderer = new marked.Renderer();
 const originalCode = renderer.code.bind(renderer);
@@ -43,6 +43,11 @@ window.electronAPI.onInitConfig((savedSidebarWidth) => {
 });
 
 window.electronAPI.onLoadMarkdown((markdownText) => {
+    // Clear search highlights before replacing content
+    searchMatches = [];
+    currentMatchIndex = -1;
+    lastSearchText = '';
+
     let html = '';
     try {
         html = marked.parse(markdownText);
@@ -50,7 +55,7 @@ window.electronAPI.onLoadMarkdown((markdownText) => {
         console.error("Marked error: ", e);
         html = "<p>Error parsing markdown</p>";
     }
-    
+
     document.getElementById('content-wrapper').scrollTop = 0;
     document.getElementById('content').innerHTML = html;
 
@@ -219,3 +224,181 @@ document.getElementById('btn-html').addEventListener('click', () => {
     const content = document.getElementById('content').innerHTML;
     window.electronAPI.saveToHtml(content);
 });
+
+// --- Search functionality (DOM-based) ---
+const searchBar = document.getElementById('search-bar');
+const searchInput = document.getElementById('search-input');
+const searchCount = document.getElementById('search-count');
+const contentWrapper = document.getElementById('content-wrapper');
+let searchActive = false;
+let lastSearchText = '';
+let searchMatches = [];
+let currentMatchIndex = -1;
+
+function clearHighlights() {
+    const content = document.getElementById('content');
+    content.querySelectorAll('mark.search-highlight').forEach(mark => {
+        const parent = mark.parentNode;
+        parent.replaceChild(document.createTextNode(mark.textContent), mark);
+        parent.normalize();
+    });
+    searchMatches = [];
+    currentMatchIndex = -1;
+}
+
+function performSearch(text) {
+    clearHighlights();
+    if (!text) { updateSearchCount(); return; }
+
+    const content = document.getElementById('content');
+    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+    const lowerText = text.toLowerCase();
+
+    textNodes.forEach(node => {
+        const nodeText = node.textContent;
+        const lowerNodeText = nodeText.toLowerCase();
+        const fragments = [];
+        let lastEnd = 0;
+        let index = lowerNodeText.indexOf(lowerText, 0);
+
+        while (index !== -1) {
+            if (index > lastEnd) {
+                fragments.push(document.createTextNode(nodeText.substring(lastEnd, index)));
+            }
+            const mark = document.createElement('mark');
+            mark.className = 'search-highlight';
+            mark.textContent = nodeText.substring(index, index + text.length);
+            fragments.push(mark);
+            searchMatches.push(mark);
+            lastEnd = index + text.length;
+            index = lowerNodeText.indexOf(lowerText, lastEnd);
+        }
+
+        if (fragments.length > 0) {
+            if (lastEnd < nodeText.length) {
+                fragments.push(document.createTextNode(nodeText.substring(lastEnd)));
+            }
+            const parent = node.parentNode;
+            fragments.forEach(frag => parent.insertBefore(frag, node));
+            parent.removeChild(node);
+        }
+    });
+
+    if (searchMatches.length > 0) {
+        currentMatchIndex = 0;
+        activateCurrentMatch();
+    }
+    updateSearchCount();
+}
+
+function activateCurrentMatch() {
+    searchMatches.forEach(m => m.classList.remove('search-active'));
+    if (currentMatchIndex >= 0 && currentMatchIndex < searchMatches.length) {
+        const current = searchMatches[currentMatchIndex];
+        current.classList.add('search-active');
+        current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateSearchCount() {
+    if (searchMatches.length > 0) {
+        searchCount.textContent = `${currentMatchIndex + 1} / ${searchMatches.length}`;
+    } else {
+        searchCount.textContent = searchInput.value.length > 0 ? '결과 없음' : '';
+    }
+}
+
+function nextMatch() {
+    if (searchMatches.length === 0) return;
+    currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+    activateCurrentMatch();
+    updateSearchCount();
+}
+
+function prevMatch() {
+    if (searchMatches.length === 0) return;
+    currentMatchIndex = (currentMatchIndex - 1 + searchMatches.length) % searchMatches.length;
+    activateCurrentMatch();
+    updateSearchCount();
+}
+
+function openSearch() {
+    searchBar.classList.add('visible');
+    searchInput.focus();
+    searchInput.select();
+    searchActive = true;
+}
+
+function closeSearch() {
+    searchBar.classList.remove('visible');
+    searchInput.value = '';
+    searchCount.textContent = '';
+    lastSearchText = '';
+    searchActive = false;
+    clearHighlights();
+    contentWrapper.focus();
+}
+
+// Ctrl+F shortcut (also triggered by menu)
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        openSearch();
+    }
+    if (e.key === 'Escape' && searchActive) {
+        e.preventDefault();
+        closeSearch();
+    }
+});
+
+window.electronAPI.onToggleSearch(() => {
+    if (searchActive) {
+        searchInput.focus();
+        searchInput.select();
+    } else {
+        openSearch();
+    }
+});
+
+// Enter = search or next, Shift+Enter = previous
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const text = searchInput.value;
+        if (text.length === 0) return;
+
+        if (text !== lastSearchText) {
+            lastSearchText = text;
+            performSearch(text);
+        } else {
+            if (e.shiftKey) prevMatch(); else nextMatch();
+        }
+    }
+});
+
+document.getElementById('search-next').addEventListener('click', () => {
+    const text = searchInput.value;
+    if (text.length === 0) return;
+    if (text !== lastSearchText) {
+        lastSearchText = text;
+        performSearch(text);
+    } else {
+        nextMatch();
+    }
+});
+
+document.getElementById('search-prev').addEventListener('click', () => {
+    const text = searchInput.value;
+    if (text.length === 0) return;
+    if (text !== lastSearchText) {
+        lastSearchText = text;
+        performSearch(text);
+    } else {
+        prevMatch();
+    }
+});
+
+document.getElementById('search-close').addEventListener('click', closeSearch);
