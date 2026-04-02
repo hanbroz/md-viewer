@@ -68,19 +68,33 @@ function loadFileAndItsFolder(filePath) {
     loadFolder(folderPath);
 }
 
+function collectMdFiles(dir, baseDir) {
+    let results = [];
+    let entries;
+    try {
+        entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch (e) {
+        return results;
+    }
+    for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            results = results.concat(collectMdFiles(fullPath, baseDir));
+        } else if (entry.name.endsWith('.md') || entry.name.endsWith('.markdown')) {
+            const relativePath = path.relative(baseDir, fullPath);
+            results.push({
+                name: relativePath,
+                path: fullPath
+            });
+        }
+    }
+    return results;
+}
+
 function sendFolderFiles(folderPath) {
-    fs.readdir(folderPath, (err, files) => {
-        if (err) return;
-
-        const mdFiles = files.filter(f => f.endsWith('.md') || f.endsWith('.markdown')).map(f => {
-            return {
-                name: f,
-                path: path.join(folderPath, f)
-            };
-        });
-
-        mainWindow.webContents.send('load-folder', mdFiles, folderPath, appConfig.lastFile);
-    });
+    const mdFiles = collectMdFiles(folderPath, folderPath);
+    mdFiles.sort((a, b) => a.name.localeCompare(b.name));
+    mainWindow.webContents.send('load-folder', mdFiles, folderPath, appConfig.lastFile);
 }
 
 function loadFolder(folderPath) {
@@ -94,7 +108,7 @@ function loadFolder(folderPath) {
     if (folderWatcher) {
         folderWatcher.close();
     }
-    folderWatcher = fs.watch(folderPath, (eventType, filename) => {
+    folderWatcher = fs.watch(folderPath, { recursive: true }, (eventType, filename) => {
         if (filename && (filename.endsWith('.md') || filename.endsWith('.markdown'))) {
             sendFolderFiles(folderPath);
         }

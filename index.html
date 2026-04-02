@@ -153,28 +153,70 @@
             margin: 0;
             padding: 0;
         }
-        #file-list li {
-            padding: 8px 15px;
-            font-size: 14px;
-            color: #24292e;
-            border-bottom: 1px solid #eee;
+        #file-list ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        /* Folder row */
+        .tree-folder {
+            padding: 6px 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #586069;
             cursor: pointer;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             user-select: none;
+            border-bottom: 1px solid #f0f0f0;
         }
-        #file-list li:hover {
+        .tree-folder:hover {
+            background: #f6f8fa;
+            color: #24292e;
+        }
+        .tree-folder .tree-icon {
+            display: inline-block;
+            width: 16px;
+            font-size: 11px;
+            color: #959da5;
+        }
+        .tree-folder .folder-name::before {
+            content: '📁 ';
+            font-size: 12px;
+        }
+        .tree-children {
+            display: none;
+        }
+        .tree-children.open {
+            display: block;
+        }
+        /* File row */
+        .tree-file {
+            padding: 6px 8px;
+            font-size: 13px;
+            color: #24292e;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            user-select: none;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .tree-file::before {
+            content: '📄 ';
+            font-size: 12px;
+        }
+        .tree-file:hover {
             background: #f1f8ff;
             color: #0366d6;
         }
-        #file-list li.active, #file-list li.focused {
+        .tree-file.active, .tree-file.focused {
             background: #0366d6;
             color: white;
             font-weight: 500;
         }
-        /* distinct styling if selected but not loaded yet */
-        #file-list li.focused:not(.active) {
+        .tree-file.focused:not(.active) {
             background: #e1e4e8;
             color: #24292e;
         }
@@ -197,6 +239,143 @@
             font-size: 14px;
         }
         
+        /* JSON Collapsible Tree */
+        .json-viewer {
+            margin: 16px 0;
+        }
+        .json-toolbar {
+            display: flex;
+            gap: 4px;
+            padding: 4px 8px;
+            background: #f1f3f5;
+            border: 1px solid #e1e4e8;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+        }
+        .json-toolbar button {
+            background: #fff;
+            border: 1px solid #d1d5da;
+            border-radius: 3px;
+            padding: 2px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #586069;
+        }
+        .json-toolbar button:hover {
+            background: #f6f8fa;
+            color: #0366d6;
+        }
+        .markdown-body .json-tree {
+            margin-top: 0;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+        .jt-toggle {
+            cursor: pointer;
+            user-select: none;
+            color: #6a737d;
+        }
+        .jt-toggle:hover {
+            color: #0366d6;
+        }
+        .jt-key { color: #005cc5; }
+        .jt-str { color: #032f62; }
+        .jt-num { color: #005cc5; }
+        .jt-bool { color: #d73a49; }
+        .jt-null { color: #d73a49; }
+        .jt-brace, .jt-bracket { color: #24292e; font-weight: 600; }
+        .jt-dots {
+            color: #6a737d;
+            display: none;
+        }
+
+        /* Mermaid diagram click hint */
+        .mermaid {
+            cursor: zoom-in;
+            position: relative;
+        }
+        .mermaid:hover::after {
+            content: 'Click to expand';
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            pointer-events: none;
+        }
+
+        /* Mermaid fullscreen overlay */
+        #mermaid-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            cursor: grab;
+        }
+        #mermaid-overlay.active { display: block; }
+        #mermaid-overlay.grabbing { cursor: grabbing; }
+        #mermaid-viewport {
+            transform-origin: 0 0;
+        }
+        #mermaid-viewport svg {
+            max-width: none !important;
+            max-height: none !important;
+        }
+        /* Make lines and arrows visible on dark background */
+        #mermaid-viewport svg line,
+        #mermaid-viewport svg path.flowchart-link,
+        #mermaid-viewport svg .edge-pattern-solid,
+        #mermaid-viewport svg .flowchart-link,
+        #mermaid-viewport svg .relation,
+        #mermaid-viewport svg [class*="edge"] path,
+        #mermaid-viewport svg path[style*="stroke: rgb(0, 0, 0)"],
+        #mermaid-viewport svg path[style*="stroke:rgb(0, 0, 0)"] {
+            stroke: #ffffff !important;
+        }
+        #mermaid-viewport svg marker path {
+            fill: #ffffff !important;
+            stroke: #ffffff !important;
+        }
+        #mermaid-viewport svg .edgeLabel {
+            background-color: rgba(0,0,0,0.7) !important;
+            color: #ffffff !important;
+        }
+        #mermaid-viewport svg .edgeLabel span {
+            color: #ffffff !important;
+        }
+        #mermaid-overlay-toolbar {
+            position: fixed;
+            top: 12px; right: 16px;
+            z-index: 2001;
+            display: flex;
+            gap: 6px;
+        }
+        #mermaid-overlay-toolbar button {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #24292e;
+        }
+        #mermaid-overlay-toolbar button:hover {
+            background: #fff;
+        }
+        #mermaid-zoom-info {
+            position: fixed;
+            bottom: 16px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 2001;
+            color: rgba(255,255,255,0.7);
+            font-size: 13px;
+        }
+
         @media print {
             @page {
                 size: A4;
@@ -284,6 +463,12 @@
                 page-break-inside: avoid;
             }
 
+            /* JSON tree: expand all for print */
+            .json-toolbar { display: none !important; }
+            .jt-block { display: inline !important; }
+            .jt-dots { display: none !important; }
+            .jt-toggle { display: none !important; }
+
             /* Mermaid diagrams */
             .mermaid {
                 max-width: 100% !important;
@@ -327,6 +512,18 @@
         </div>
     </div>
     
+    <div id="mermaid-overlay">
+        <div id="mermaid-overlay-toolbar">
+            <button id="mermaid-zoom-in" title="확대 (+)">+</button>
+            <button id="mermaid-zoom-out" title="축소 (-)">−</button>
+            <button id="mermaid-zoom-reset" title="원래 크기 (0)">1:1</button>
+            <button id="mermaid-zoom-fit" title="화면에 맞추기 (F)">Fit</button>
+            <button id="mermaid-close" title="닫기 (Esc)">✕</button>
+        </div>
+        <div id="mermaid-viewport"></div>
+        <div id="mermaid-zoom-info"></div>
+    </div>
+
     <!-- Mermaid (pre-built browser bundle, loaded as global) -->
     <script src="./dist/mermaid.min.js"></script>
 
