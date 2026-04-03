@@ -108,9 +108,16 @@ function loadFolder(folderPath) {
     if (folderWatcher) {
         folderWatcher.close();
     }
+    let watchDebounce = null;
     folderWatcher = fs.watch(folderPath, { recursive: true }, (eventType, filename) => {
-        if (filename && (filename.endsWith('.md') || filename.endsWith('.markdown'))) {
-            sendFolderFiles(folderPath);
+        // filename can be null on macOS (FSEvents) — refresh unconditionally in that case
+        const isRelevant = !filename ||
+            filename.endsWith('.md') ||
+            filename.endsWith('.markdown');
+        if (isRelevant) {
+            // Debounce to avoid burst refreshes
+            clearTimeout(watchDebounce);
+            watchDebounce = setTimeout(() => sendFolderFiles(folderPath), 300);
         }
     });
 }
@@ -137,6 +144,14 @@ function createMenu() {
         {
             label: 'Edit',
             submenu: [
+                { role: 'undo' },
+                { role: 'redo' },
+                { type: 'separator' },
+                { role: 'cut' },
+                { role: 'copy' },
+                { role: 'paste' },
+                { role: 'selectAll' },
+                { type: 'separator' },
                 {
                     label: 'Find...',
                     accelerator: 'CmdOrCtrl+F',
@@ -153,6 +168,24 @@ function createMenu() {
             ]
         }
     ];
+
+    // macOS: prepend app menu with About, Hide, Quit
+    if (process.platform === 'darwin') {
+        template.unshift({
+            label: app.name,
+            submenu: [
+                { role: 'about' },
+                { type: 'separator' },
+                { role: 'services' },
+                { type: 'separator' },
+                { role: 'hide' },
+                { role: 'hideOthers' },
+                { role: 'unhide' },
+                { type: 'separator' },
+                { role: 'quit' }
+            ]
+        });
+    }
 
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);

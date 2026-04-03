@@ -7,7 +7,9 @@
     "start": "electron .",
     "build:renderer": "node scripts/build.js",
     "build:app": "electron-packager . \"MD Viewer\" --platform=win32 --arch=x64 --out=release --overwrite --ignore=/release$ --ignore=/release-builds$ --ignore=/_sample$ --ignore=/docs$ --ignore=/scripts$ --ignore=/\\.git$ --ignore=/renderer\\.js$",
-    "build": "npm run build:renderer && npm run build:app"
+    "build:app:mac": "electron-packager . \"MD Viewer\" --platform=darwin --arch=universal --out=release --overwrite --ignore=/release$ --ignore=/release-builds$ --ignore=/_sample$ --ignore=/docs$ --ignore=/scripts$ --ignore=/\\.git$ --ignore=/renderer\\.js$",
+    "build": "npm run build:renderer && npm run build:app",
+    "build:mac": "npm run build:renderer && npm run build:app:mac"
   },
   "keywords": [
     "markdown",
