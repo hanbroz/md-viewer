@@ -1,6 +1,6 @@
 {
   "name": "md-viewer",
-  "version": "1.0.0",
+  "version": "2026.04.02.181946",
   "description": "Markdown Viewer - View markdown files with syntax highlighting and mermaid diagrams",
   "main": "main.js",
   "scripts": {
