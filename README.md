@@ -2,6 +2,8 @@
 
 Markdown 파일을 보기 위한 데스크톱 앱입니다. Electron 기반이며, Mermaid 다이어그램과 코드 구문 강조를 지원합니다.
 
+![MD Viewer Screenshot](screenshot.png)
+
 ## 기능
 
 - Markdown 렌더링 (GitHub 스타일)
