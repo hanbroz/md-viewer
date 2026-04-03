@@ -12,6 +12,9 @@ const originalCode = renderer.code.bind(renderer);
 function htmlEsc(s) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+function attrEsc(s) {
+    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 function jsonNodeHtml(val, depth) {
     if (val === null) return '<span class="jt-null">null</span>';
@@ -50,12 +53,14 @@ function jsonNodeHtml(val, depth) {
     return h;
 }
 
-function renderJsonTree(parsed) {
+function renderJsonTree(parsed, originalText) {
     const tree = jsonNodeHtml(parsed, 0);
+    const escaped = attrEsc(originalText || JSON.stringify(parsed, null, 2));
     return '<div class="json-viewer">'
         + '<div class="json-toolbar">'
         + '<button class="json-expand-all" title="모두 펴기">⊞ 모두 펴기</button>'
         + '<button class="json-collapse-all" title="모두 접기">⊟ 모두 접기</button>'
+        + `<button class="code-copy-btn" title="복사" data-code="${escaped}">📋 복사</button>`
         + '</div>'
         + `<pre class="json-tree">${tree}</pre></div>`;
 }
@@ -76,20 +81,39 @@ renderer.code = function(codeInfo) {
         return `<div class="mermaid">${text}</div>`;
     }
 
-    if (lang === 'json') {
-        try {
-            const parsed = JSON.parse(text);
-            if (parsed !== null && typeof parsed === 'object') {
-                return renderJsonTree(parsed);
+    if (lang === 'json' || !lang) {
+        const trimmed = text.trim();
+        if (lang === 'json' || trimmed.startsWith('{') || trimmed.startsWith('[')) {
+            // Try original first, then sanitized version
+            let parsed = null;
+            try {
+                parsed = JSON.parse(trimmed);
+            } catch(e) {
+                try {
+                    const sanitized = trimmed
+                        .replace(/\[\.\.\.?\]/g, '[]')
+                        .replace(/\{\.\.\.?\}/g, '{}')
+                        .replace(/\/\/[^\n]*/g, '')
+                        .replace(/,\s*([}\]])/g, '$1');
+                    parsed = JSON.parse(sanitized);
+                } catch(e2) { /* still invalid, fall through */ }
             }
-        } catch(e) { /* invalid JSON, fall through to normal highlighting */ }
+            if (parsed !== null && typeof parsed === 'object') {
+                return renderJsonTree(parsed, trimmed);
+            }
+        }
     }
 
+    const escaped = attrEsc(text);
+    let html;
     if (typeof codeInfo === 'object') {
-        return originalCode(codeInfo);
+        html = originalCode(codeInfo);
     } else {
-        return originalCode(text, lang, isEscaped);
+        html = originalCode(text, lang, isEscaped);
     }
+    return `<div class="code-block-wrapper">`
+        + `<button class="code-copy-btn" title="복사" data-code="${escaped}">📋 복사</button>`
+        + html + '</div>';
 };
 
 marked.setOptions({ renderer });
@@ -551,6 +575,13 @@ document.getElementById('content').addEventListener('click', (e) => {
             block.style.display = 'none';
             if (dots) dots.style.display = '';
             tog.textContent = '▶';
+        });
+    } else if (t.classList.contains('code-copy-btn')) {
+        const code = t.getAttribute('data-code');
+        navigator.clipboard.writeText(code).then(() => {
+            const orig = t.textContent;
+            t.textContent = '✅ 복사됨';
+            setTimeout(() => { t.textContent = orig; }, 1500);
         });
     } else if (t.classList.contains('json-expand-all')) {
         t.closest('.json-viewer').querySelectorAll('.jt-toggle').forEach(tog => {
