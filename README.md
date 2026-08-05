@@ -26,9 +26,12 @@ Markdown 파일을 보기 위한 데스크톱 앱입니다. Electron 기반이�
 
 ### Windows
 
-1. [Releases](https://github.com/hanbroz/md-viewer/releases) 페이지에서 `MD_Viewer_xxxx.xx.xx.xxxxxx.zip` 파일을 다운로드합니다.
+1. [Releases](https://github.com/hanbroz/md-viewer/releases) 페이지에서 `MD-Viewer-Portable-xxxx.xx.xx.xxxxxx.zip` 파일을 다운로드합니다.
 2. 원하는 폴더에 압축을 풉니다.
-3. `MD Viewer.exe`를 더블클릭하면 실행됩니다.
+3. 생성된 `MD Viewer` 폴더 안의 `MD Viewer.exe`를 더블클릭하면 실행됩니다.
+
+> 설치 과정이 없는 포터블 버전입니다. 폴더째 옮기거나 USB에 담아 사용할 수 있습니다.
+> SmartScreen 경고가 나오면 `추가 정보 > 실행`을 클릭하세요 (코드 서명이 없는 빌드입니다).
 
 ### macOS
 
