@@ -199,6 +199,7 @@ function createWindow() {
         height: bounds.height,
         x: bounds.x,
         y: bounds.y,
+        icon: path.join(__dirname, 'mv_icon_minimal.ico'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,

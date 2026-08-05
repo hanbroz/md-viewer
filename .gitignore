@@ -6,3 +6,9 @@ release-builds/
 # bkit tooling metadata
 docs/.bkit-memory.json
 docs/.pdca-status.json
+
+# OMC operational state
+.omc/
+
+# scratch screenshots (not referenced by README)
+_sample/docs/

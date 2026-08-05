@@ -1,15 +1,20 @@
 {
   "name": "md-viewer",
-  "version": "2026.04.02.181946",
+  "version": "2026.08.06.022032",
   "description": "Markdown Viewer - View markdown files with syntax highlighting and mermaid diagrams",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build:renderer": "node scripts/build.js",
-    "build:app": "electron-packager . \"MD Viewer\" --platform=win32 --arch=x64 --out=release --overwrite --ignore=/release$ --ignore=/release-builds$ --ignore=/_sample$ --ignore=/docs$ --ignore=/scripts$ --ignore=/\\.git$ --ignore=/renderer\\.js$",
+    "build:app": "electron-packager . \"MD Viewer\" --platform=win32 --arch=x64 --icon=mv_icon_minimal.ico --out=release --overwrite --ignore=/release$ --ignore=/release-builds$ --ignore=/_sample$ --ignore=/docs$ --ignore=/scripts$ --ignore=/\\.git$ --ignore=/renderer\\.js$",
     "build:app:mac": "electron-packager . \"MD Viewer\" --platform=darwin --arch=universal --out=release --overwrite --ignore=/release$ --ignore=/release-builds$ --ignore=/_sample$ --ignore=/docs$ --ignore=/scripts$ --ignore=/\\.git$ --ignore=/renderer\\.js$",
     "build": "npm run build:renderer && npm run build:app",
-    "build:mac": "npm run build:renderer && npm run build:app:mac"
+    "build:mac": "npm run build:renderer && npm run build:app:mac",
+    "build:installer": "node scripts/build-installer.js",
+    "build:portable": "node scripts/build-portable-zip.js",
+    "version:stamp": "node scripts/stamp-version.js",
+    "dist": "npm run version:stamp && npm run build && npm run build:installer",
+    "dist:portable": "npm run version:stamp && npm run build && npm run build:portable"
   },
   "keywords": [
     "markdown",
